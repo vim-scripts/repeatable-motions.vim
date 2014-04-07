@@ -1,0 +1,22 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=4914
+
+While the motions f/F and t/T can be repeated with , and ; the default key mapping is not
+only unintuitive it also requires the user to remember in what direction s/he moved with the previous f/t motion.
+
+This nuisance brought me to rethink the idea of repeatable motions and resulted
+in this plugin.
+
+repeatable-motions.vim makes most default motions repeatable in an easy and
+intuitive way. Perform a motion once (such as f) and repeat it simply with
+<C-h> to the left and <C-l> to the right. The direction is always what you'd expect, no more remembering if you used f or F.
+
+Additionally repeatable-motions.vim distinguishes between vertical and horizontal
+motions. So [M can be repeated with <C-j> and <C-k> while still remembering your
+previous horizontal movement.
+
+Motions that are being repeated behave like normal motions, support counts and can be used in
+operation-pending as well as visual-mode.
+
+Everything works out of the box and making your own motion
+repeatable is as easy as calling AddRepeatableMotion("<Up>", "<Down>", 1).
+Buffer-, expression- and custom mappings are all handled without further ado.
