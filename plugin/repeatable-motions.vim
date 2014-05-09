@@ -1,7 +1,7 @@
 " File: repeatable-motions.vim
 " Author: Mohammed Chelouti <mhc23 at web dot de>
 " Description: Plugin that makes many motions repeatable
-" Last Modified: Apr 07, 2014
+" Last Modified: May 09, 2014
 
 if exists('g:loaded_repeatable_motions') || !has('eval')
     finish
@@ -11,6 +11,7 @@ let g:loaded_repeatable_motions = 1
 let s:repeatable_motions = []
 let s:previous_columnwise_motion = ''
 let s:previous_linewise_motion = ''
+let s:most_recent_motion = ''
 
 let s:tf_target = ''
 let s:repeating = 0
@@ -22,9 +23,15 @@ let g:columnwise_motion_repeating = 0
 "
 " vertical start = -2
 " vertical end = 2
-function! s:RepeatMotion(direction)
+function! s:RepeatMotion(...)
+    if (a:0 > 0)
+        let direction = a:1
+    else
+        let direction = s:GetMotionDirection(s:most_recent_motion)
+    endif
+
     let result = col('.').'|'
-    if a:direction % 2 == 0
+    if direction % 2 == 0
         let motionObject = s:GetMotionObject(s:previous_linewise_motion)
     else
         let motionObject = s:GetMotionObject(s:previous_columnwise_motion)
@@ -35,15 +42,15 @@ function! s:RepeatMotion(direction)
     endif
 
     let s:repeating = 1
-    if a:direction % 2 == 0
-        let g:linewise_motion_repeating = a:direction / 2
+    if direction % 2 == 0
+        let g:linewise_motion_repeating = direction / 2
     else
-        let g:columnwise_motion_repeating = a:direction
+        let g:columnwise_motion_repeating = direction
     endif
 
-    if a:direction > 0
+    if direction > 0
         let result = s:Move(motionObject.forwards.lhs)
-    elseif a:direction < 0
+    elseif direction < 0
         let result = s:Move(motionObject.backwards.lhs)
     endif
 
@@ -60,10 +67,12 @@ function! s:Move(motion)
 
     if type(motionObject) == type({})
         if motionObject.linewise
-            let s:previous_linewise_motion = a:motion
+            let s:previous_linewise_motion = s:NormalizeMotion(a:motion)
         else
-            let s:previous_columnwise_motion = a:motion
+            let s:previous_columnwise_motion = s:NormalizeMotion(a:motion)
         endif
+
+        let s:most_recent_motion = s:NormalizeMotion(a:motion)
 
         if direction > 0
             let directionKey = 'forwards'
@@ -162,7 +171,9 @@ function! AddRepeatableMotion(backwards, forwards, linewise)
 endfunction
 
 function! RemoveRepeatableMotion(motion)
-    let object = s:GetMotionObject(a:motion)
+    let motion = s:NormalizeMotion(a:motion)
+    let motion = substitute(motion, '<Leader>', g:mapleader, 'g')
+    let object = s:GetMotionObject(motion)
     let lists = [s:repeatable_motions]
 
     if type(object) != type({})
@@ -224,9 +235,8 @@ function! s:GetMotionObject(motion)
 
     for l in lists
         for m in l
-            if m.backwards.lhs ==# a:motion || m.forwards.lhs ==# a:motion
-                        \ || eval('"\'.m.backwards.lhs.'"') ==# a:motion
-                        \ || eval('"\'.m.forwards.lhs.'"') ==# a:motion
+            if s:NormalizeMotion(m.backwards.lhs) ==# s:NormalizeMotion(a:motion)
+                        \ || s:NormalizeMotion(m.forwards.lhs) ==# s:NormalizeMotion(a:motion)
                 return m
             endif
         endfor
@@ -312,7 +322,7 @@ function! s:GetMotionDirection(motion)
 
     if type(motionObject) != type({})
         return 0
-    elseif a:motion ==# motionObject.backwards.lhs
+    elseif s:NormalizeMotion(a:motion) ==# s:NormalizeMotion(motionObject.backwards.lhs)
         let dir = -1
     else
         let dir = 1
@@ -328,9 +338,17 @@ endfunction
 " t/T and f/F are special motions and need this workaround to be easily repeatable
 function! s:TFWorkaround(motion)
     if !g:columnwise_motion_repeating
-        let g:tf_target = nr2char(getchar())
+        let s:tf_target = nr2char(getchar())
+        let s:tf_motion = a:motion
+        return a:motion . s:tf_target
+    else
+        return (s:tf_motion ==# a:motion) ? ';' : ','
     endif
-    return a:motion . g:tf_target
+endfunction
+
+function! s:NormalizeMotion(motion)
+    let result = substitute(a:motion, '<\ze[^>]\+>', '\\<', 'g')
+    exe 'return "'. result . '"'
 endfunction
 
 if !exists('g:tf_workaround')
@@ -363,6 +381,7 @@ noremap <script> <expr> <silent> <Plug>RepeatMotionUp <SID>RepeatMotion(-2)
 noremap <script> <expr> <silent> <Plug>RepeatMotionDown <SID>RepeatMotion(2)
 noremap <script> <expr> <silent> <Plug>RepeatMotionLeft <SID>RepeatMotion(-1)
 noremap <script> <expr> <silent> <Plug>RepeatMotionRight <SID>RepeatMotion(1)
+noremap <script> <expr> <silent> <Plug>RepeatMostRecentMotion <SID>RepeatMotion()
 
 if g:tf_workaround
     noremap <script> <expr> <silent> t <SID>TFWorkaround('t')

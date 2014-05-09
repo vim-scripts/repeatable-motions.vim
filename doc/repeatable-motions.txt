@@ -8,11 +8,14 @@ This plugin only works if Vim was compiled with the |+eval| feature.
 1. Using repeatable motions                         ||repeatable-motions-using|
   1.1 Using repeatable motions                    ||repeatable-motions-default|
   1.2 Changing the default mappings               |repeatable-motions-mapping|
+  1.3 Repeat most recent motion               |repeatable-motions-most-recent|
 2. Custom motions                             ||repeatable-motions-customizing|
   2.1 Adding repeatable motions                    ||repeatable-motions-adding|
   2.2 Removing repeatable motions                ||repeatable-motions-removing|
   2.3 Removing repeatable motions                ||repeatable-motions-relative|
 3. Configuration                            |repeatable-motions-configuration|
+4. Changelog                                    |repeatable-motions-changelog|
+5. License                                        |repeatable-motions-license|
 
 
 ==============================================================================
@@ -20,7 +23,7 @@ This plugin only works if Vim was compiled with the |+eval| feature.
 1. Using repeatable motions
 
 |repeatable-motions| allows you to repeat your previously performed motion
-back- and forwards. Most linewise motions are already repeatable. Just hit *}*
+back- and forwards. Most linewise motions are already repeatable. Just hit |}|
 and the cursor moves to the next empty line.
 
 Hit <C-j> and the cursor moves to the next empty line. If you now hit <C-k> it
@@ -41,8 +44,10 @@ the columnwise motions |f|, |F|, |t|, |T|, |(|, |)|, |[s| and |]s|.
 
 -----------------------------------------------------------------------------
                                                   *repeatable-motions-mapping*
-                               *<Plug>RepeatMotionLeft* *<Plug>RepeatMotionUp*
-                            *<Plug>RepeatMotionDown* *<Plug>RepeatMotionRight*
+                                              *<Plug>RepeatMotionLeft* *<C-h>*
+                                                *<Plug>RepeatMotionUp* *<C-k>*
+                                              *<Plug>RepeatMotionDown* *<C-j>*
+                                             *<Plug>RepeatMotionRight* *<C-l>*
 1.2 Changing the default mappings
 
 If you do not want to use the default mappings to repeat motions you can remap
@@ -55,6 +60,15 @@ do to the following:
     map <Left> <Plug>RepeatMotionLeft
 
 Pay attention that you must use |:map| and not |:noremap|!
+
+-----------------------------------------------------------------------------
+                                              *repeatable-motions-most-recent*
+                                           *<Plug>RepeatMostRecentMotion* *g.*
+
+1.3 Repeat most recent motion
+
+The |<Plug>RepeatMostRecentMotion| mapping repeats the most recent motion in
+the same direction.
 
 
 ==============================================================================
@@ -119,15 +133,19 @@ special motions.
 1 if forwards.
 >
     " Returns a string that can be used as the rhs of an expression mapping
-    " e.g.: fa (find a or Tq move to first q before cursor)
+    " e.g.: fa (find a) or Tq (move to first q before cursor)
     function! TF_workaround(motion)
         " if motion is not being repeated prompt user for character to
         " find/move to
         if !g:columnwise_motion_repeating
-            let g:tf_target = nr2char(getchar())
+            let s:tf_target = nr2char(getchar())
+            let s:tf_motion = a:motion
+            return a:motion . s:tf_target
+        else
+            return (s:tf_motion ==# a:motion) ? ';' : ','
         endif
-        return a:motion . g:tf_target
     endfunction
+
 
     " Overwrite default behaviour of t/f with call to TFWorkaround()
     noremap <expr> t TFWorkaround('t')
@@ -136,7 +154,7 @@ special motions.
     noremap <expr> F TFWorkaround('F')
 
     " Make t and f repeatable columnwise
-    " repeatable-motions will on RepeatMotionLeft/RepeatMotionRight call
+    " repeatable-motions will on <Plug>RepeatMotionLeft/<Plug>RepeatMotionRight call
     " TFWorkaraound. That function also contains the logic to distinguish
     " between repetition and explicit user input
     call AddRepeatableMotion('T', 't', 0)
@@ -153,17 +171,47 @@ GetPreviouslyPreformedMotion({linewise})       *GetPreviouslyPreformedMotion()*
     "forwards"  dictionary containing all information of the forwards mapping.
     
     Backwards and forwards dictionaries containt the same keys as the result
-    from |maparg()|.
+    of |maparg()|.
 
------------------------------------------------------------------------------
+=============================================================================
                                             *repeatable-motions-configuration*
-3 Configuration
+3. Configuration
                                                  *g:loaded_repeatable_motions*
 Set 'g:loaded_repeatable_motions' to 1 in your vimrc if you want to
 disable |repeatable-motions| without having to remove the plugin.
 
                                                              *g:tf_workaround*
-|repeatable-motions| changes the default behaviour of |t|/|T| and |f|/|F| if you do not
-want to use that workaround set 'g:tf_workaround' to 0.
+|repeatable-motions| changes the default behaviour of |t|/|T| and |f|/|F| to make them
+repeatable if you do not want to use that workaround set 'g:tf_workaround'
+to 0.
+
+=============================================================================
+                                                *repeatable-motions-changelog*
+4. Changelog
+
+-----------------------------------------------------------------------------
+v1.1
+Bugfixes:
+- |RemoveRepeatableMotion()| can now remove motions containing |<Leader>|.
+- Mappings with special keys (see \<xxx> under |expr-quote|) are
+  handled correctly.
+- Workaround for t/T now doesn't get stuck on first occurrence unless
+  'cpoptions' contains ';' (see |cpo-;|).
+
+Features:
+- Added functionality to repeat most recent motion in the same direction
+  (see |<Plug>RepeatMostRecentMotion|).
+
+
+-----------------------------------------------------------------------------
+v1.0
+- First public release.
+
+=============================================================================
+                                                  *repeatable-motions-license*
+5. License
+
+|repeatable-motions| is distributed and may be redistributed under the same
+|license| as Vim.
 
  vim:tw=78:ts=8:ft=help:norl:
