@@ -1,10 +1,13 @@
 " File: repeatable-motions.vim
 " Author: Mohammed Chelouti <mhc23 at web dot de>
 " Description: Plugin that makes many motions repeatable
-" Last Modified: May 09, 2014
+" Last Modified: Jul 26, 2014
 
 if exists('g:loaded_repeatable_motions') || !has('eval')
     finish
+endif
+if !exists('g:repeatable_motions_use_default_mappings')
+    let g:repeatable_motions_use_default_mappings = 1
 endif
 let g:loaded_repeatable_motions = 1
 
@@ -247,7 +250,7 @@ function! s:IsBufferMotion(motionObject)
     return motionObject.backwards.buffer
 endfunction
 
-function! GetPreviouslyPreformedMotion(linewise)
+function! GetPreviouslyPerformedMotion(linewise)
     if a:linewise
         let motionObject = s:GetMotionObject(s:previous_linewise_motion)
     else

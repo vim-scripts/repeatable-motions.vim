@@ -12,7 +12,7 @@ This plugin only works if Vim was compiled with the |+eval| feature.
 2. Custom motions                             ||repeatable-motions-customizing|
   2.1 Adding repeatable motions                    ||repeatable-motions-adding|
   2.2 Removing repeatable motions                ||repeatable-motions-removing|
-  2.3 Removing repeatable motions                ||repeatable-motions-relative|
+  2.3 Removing repeatable motions      |repeatable-motions-relative-direction|
 3. Configuration                            |repeatable-motions-configuration|
 4. Changelog                                    |repeatable-motions-changelog|
 5. License                                        |repeatable-motions-license|
@@ -118,7 +118,8 @@ RemoveRepeatableMotion({mapping})                   *RemoveRepeatableMotion()*
 
 
 -----------------------------------------------------------------------------
-                                                  *repeatable-motions-relative*
+                                       *repeatable-motions-relative-direction*
+                                             *repeatable-motions-special-case*
                  *g:vertical_motion_repeating* *g:horizontal_motion_repeating*
 2.3 Special cases
 
@@ -164,7 +165,7 @@ special motions.
                                       *repeatable-motions-previously-performed*
 2.4 Previously performed motion
 
-GetPreviouslyPreformedMotion({linewise})       *GetPreviouslyPreformedMotion()*
+GetPreviouslyPerformedMotion({linewise})       *GetPreviouslyPerformedMotion()*
     Returns an object with three keys:
     "linewise"  1 for a linewise motion, else 0
     "backwards" dictionary containing all information of the backwards mapping.
@@ -185,11 +186,22 @@ disable |repeatable-motions| without having to remove the plugin.
 repeatable if you do not want to use that workaround set 'g:tf_workaround'
 to 0.
 
+                                   *g:repeatable_motions_use_default_mappings*
+Set 'g:repeatable_motions_default_mappings' to 0 in your vimrc to disable
+all default mappings.
+
 =============================================================================
                                                 *repeatable-motions-changelog*
 4. Changelog
 
 -----------------------------------------------------------------------------
+v1.1.1
+Features:
+- Added 'g:repeatable_motions_default_mappings' to disable all default
+  mappings.
+Bugfixes:
+- Renamed GetPreviouslyPreformedMotion() to |GetPreviouslyPerformedMotion()|.
+
 v1.1
 Bugfixes:
 - |RemoveRepeatableMotion()| can now remove motions containing |<Leader>|.
